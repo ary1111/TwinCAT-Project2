@@ -318,25 +318,21 @@ VOID CModule1::read_angle()
 // Ryason:  Calculates the offset for the desired home position based on the current angle (0:360 deg)
 VOID CModule1::calibrate()
 {
-	//m_Controls.Q1_offset = 90*pi/180 + DEG1;			//Main Left Actuator
 	m_Controls.Q1_offset = 0 * pi / 180 + DEG1;			//Main Left Actuator
-	
-	m_Controls.Q2_offset = 180*pi/180 - DEG2;		//Main Right Actuator
-	
-	//m_Controls.Q3_offset = 90*pi/180 + DEG3;		//Wrist Actuator //Original Derivation
-	m_Controls.Q3_offset = 270 * pi / 180 + DEG3;	   //Wrist Actuator //MGK Derivation	
+	m_Controls.Q2_offset = 180*pi/180 - DEG2;		   //Main Right Actuator
+	m_Controls.Q3_offset = 270 * pi / 180 + DEG3;	   //Wrist Actuator
 	m_Controls.Q4_offset = 0 * pi / 180 + DEG4;         //Side Actuator
     m_Controls.Q5_offset = 0 * pi / 180 + DEG5;         //Wrist 2nd DOF
 
-    phiOrig = 2.6; // 2.6;
-    phiScale = 1.075; // 1.075
+    phiOrig = 2.6;
+    phiScale = 1.075;
 
 	L1 = .2415;				//Length of link 1 (meter)
 	L2 = .230332;			//Length of link 2 (meter)
 	L3 = .171;					//Length of link 3 (meter)
-	L4 = .095;						//Length of link 4 (meter)
-	L5 = .05;						//Length of Q1 base to Wrist base
-    LW = .09;             //Length of wrist handle to 2nd dof
+	L4 = .095;					//Length of link 4 (meter)
+	L5 = .05;					//Length of Q1 base to Wrist base
+    LW = .09;                 //Length of wrist handle to 2nd dof
 
 	g = 9.80655;			// units: m/s^2
 	mA = 0.09692;			// units: kg
@@ -345,10 +341,10 @@ VOID CModule1::calibrate()
 	mD = 0.05247;
 	mE = 0.1636;
 	mF = 0.09283;
-	mG = 0.2221;
-	mH = 0.1484;
-	mI = 0.1002;
-	mJ = 0.09592;
+    mG = 0.35222;
+    mH = 0.23137;
+    mI = 0.08985;
+    mJ = 0.130634;
 	mK = 0.03240;
 	mL = mF;
 	mM = 0.02973;
@@ -364,14 +360,14 @@ VOID CModule1::calibrate()
 	Ecmy = .0005104;
 	Fcmx = -.0007880;
 	Fcmz = .1207547;
-	Gcmx = -.1803188;
-	Gcmz = -.0021252;
-	Hcmx = .0064386;
-	Hcmz = .0968562;
+    Gcmx = -.2059694;
+    Gcmz = -.0039486;
+    Hcmx = .01522695;
+    Hcmz = .06699145;
 	Icmx = -.0024208;
 	Icmy = .0001238;
-	Icmz = -.0949877;
-	Jcmz = .07407418;
+    Icmz = -.1129055;
+    Jcmz = .11490801;
 	Lcmx = Fcmx;
 	Lcmz = Fcmz;
 	Mcmx = .0327693;
@@ -384,7 +380,6 @@ VOID CModule1::calibrate()
 	Qcmy = .0027558;
 	Qcmz = .0185286;
 
-	//m_Controls.CALIBRATE = true;
     m_System.CALIBRATE = true;
 }
 
@@ -651,10 +646,8 @@ VOID CModule1::force_response()
 VOID CModule1::compensate_gravity()
 {
 	//Temporary weighting coef. until proper mass properties obtained
-	float w1 = 0.3;
-    //float w1 = 0.175;
+    float w1 = 0.225;
     float w2 = 0;
-    //float w2 = 0.2;
 	float w3 = 0.35;
 	float w4 = 0.50;
 
@@ -685,7 +678,6 @@ VOID CModule1::compensate_gravity()
 		- 0.0635445*mF*g*(sin_(qB)*(1 + L5*cos_(m_Controls.Q3_realposition) / (L4*sqrt_(1 - pow_(L5, 2)*pow_(sin_(m_Controls.Q3_realposition), 2) / pow_(L4, 2)))) - 15.73700320248015*cos_(qB)*(L4 + L5*cos_(m_Controls.Q3_realposition) / sqrt_(1 -
 		pow_(L5, 2)*pow_(sin_(m_Controls.Q3_realposition), 2) / pow_(L4, 2))) - 1.051288467137203*cos_(qB)*(1 + L5*cos_(m_Controls.Q3_realposition) / (L4*sqrt_(1 - pow_(L5, 2)*pow_(sin_(m_Controls.Q3_realposition), 2) / pow_(L4, 2)))))
 		- 0.0325*sin_(2.356194490192345 + m_Controls.Q1_realposition)) * w3 ;
-
 }
 
 VOID CModule1::compensate_staticmu()
