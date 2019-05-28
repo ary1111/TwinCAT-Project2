@@ -188,11 +188,22 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 	read_angle();
 	
 	//If CALIBRATE variable is false, offset the angular position
-	//if (!m_Controls.CALIBRATE)
     if (!m_System.CALIBRATE)
 	{
 		calibrate();
 	}
+
+    //If ZERO variable is true, set the end effector position to P0
+
+    if (!m_ADS_data.ExternalComm.ZeroPos)
+    {
+        P0x = m_ADS_data.MotorComm.PX;
+        P0y = m_ADS_data.MotorComm.PY;
+        P0z = m_ADS_data.MotorComm.PZ;
+
+        m_ADS_data.ExternalComm.ZeroPos = true;
+    }
+
 	
 	//Calculates the real angular position and velocity
 	convert_angle();
@@ -212,6 +223,12 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 		//simple_box_interior();
 
 		//Internal Option 3: Simple Spherical Response
+
+        //Internal Option 4: Laryngoscope Lift
+        //if (m_ADS_data.ExternalComm.LaryngLiftSim)
+        //{
+        //    sim_laryngoscopelift();
+        //}
 
 		//Set Reference force 
 		compensate_staticmu();
@@ -640,13 +657,13 @@ VOID CModule1::force_response()
 
 
 	//t3 = (int)(-TZ*(1 + L5*cos(m_Controls.Q3_realposition) / (L4*sqrt_(1 - L5 ^ 2 * sin(m_Controls.Q3_realposition) ^ 2 / L4 ^ 2))));
-	//t3 = 0;
+    t3 = m_ADS_data.MotorComm.TY;
 }
 
 VOID CModule1::compensate_gravity()
 {
 	//Temporary weighting coef. until proper mass properties obtained
-    float w1 = 0.225;
+    float w1 = 0.25; //.225
     float w2 = 0;
 	float w3 = 0.35;
 	float w4 = 0.50;
@@ -755,4 +772,15 @@ VOID CModule1::zero_torque()
 	m_Outputs.Q2_targettorque = 0;
 	m_Outputs.Q3_targettorque = 0;
 	m_Outputs.Q4_targettorque = 0;
+}
+
+VOID CModule1::sim_laryngoscopelift()
+{
+    float lev = 0.1;         //Lever Arm for CoF
+
+    m_ADS_data.MotorComm.FX = (P0x - m_ADS_data.MotorComm.PX)*kf;
+    m_ADS_data.MotorComm.FY = (P0y - m_ADS_data.MotorComm.PY)*kf;
+    m_ADS_data.MotorComm.FZ = (P0z - m_ADS_data.MotorComm.PZ)*kf;
+
+    m_ADS_data.MotorComm.TY = sqrt_(m_ADS_data.MotorComm.FX*m_ADS_data.MotorComm.FX + m_ADS_data.MotorComm.FY*m_ADS_data.MotorComm.FY)*lev;
 }

@@ -2423,10 +2423,10 @@ External Setpoint Generation:
 								</Symbol>
 							</DataArea>
 							<DataArea>
-								<AreaNo AreaType="Internal" CreateSymbols="true" ShowSymbols="true">2</AreaNo>
+								<AreaNo AreaType="Internal" CreateSymbols="true">2</AreaNo>
 								<Name>ADS_data</Name>
 								<ContextId>1</ContextId>
-								<ByteSize>40</ByteSize>
+								<ByteSize>42</ByteSize>
 								<Symbol>
 									<Name>MotorComm</Name>
 									<BitSize>288</BitSize>
@@ -2496,6 +2496,26 @@ External Setpoint Generation:
 										<BitOffs>0</BitOffs>
 									</SubItem>
 									<BitOffs>288</BitOffs>
+								</Symbol>
+								<Symbol>
+									<Name>ExternalComm</Name>
+									<BitSize>16</BitSize>
+									<SubItem>
+										<Name>ZeroPos</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+										<BitSize>8</BitSize>
+										<BitOffs>0</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>LaryngLiftSim</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+										<BitSize>8</BitSize>
+										<BitOffs>8</BitOffs>
+										<Default>
+											<EnumText>FALSE</EnumText>
+										</Default>
+									</SubItem>
+									<BitOffs>320</BitOffs>
 								</Symbol>
 							</DataArea>
 							<DataArea>

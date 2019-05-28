@@ -48,6 +48,7 @@ public:
 	void compensate_gravity();
 	void compensate_staticmu();
 	void zero_torque();
+    void sim_laryngoscopelift();
 
 	float offset1;
 	float DEG1;
@@ -133,6 +134,13 @@ public:
 	float    Qcmx;
 	float    Qcmy;
 	float    Qcmz;
+
+    //Testing Variables;
+    float     P0x;
+    float     P0y;
+    float     P0z;
+    float     kf;			//Force Spring Constant, 300 is upper
+
 	//Ryason end
 
 protected:

@@ -55,6 +55,7 @@ typedef struct _Module1Outputs
 	SHORT Q4_targettorque;
 } Module1Outputs, *PModule1Outputs;
 
+#pragma pack(push,1)
 typedef struct _Module1ADS_data
 {
 	struct {
@@ -71,7 +72,12 @@ typedef struct _Module1ADS_data
 	struct {
 		float EncoderValue;
 	} ArduinoComm;
+	struct {
+		bool ZeroPos;
+		bool LaryngLiftSim;
+	} ExternalComm;
 } Module1ADS_data, *PModule1ADS_data;
+#pragma pack(pop)
 
 typedef struct _Module1Controls
 {
