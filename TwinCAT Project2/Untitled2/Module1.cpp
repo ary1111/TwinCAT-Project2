@@ -7,6 +7,7 @@
 #pragma hdrstop
 
 #include "Module1.h"
+#include "TcTimeConversion.h"
 
 # define pi           3.14159265358979323846
 
@@ -183,6 +184,8 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 	HRESULT hr = S_OK;
 
 	//Ryason begin
+    hr = FAILED(hr) ? hr : ipTask->GetCycleTime(&m_Outputs.TaskCycleTime);
+    samplingTime = (double)m_Outputs.TaskCycleTime / 1000000000;
 
 	//Read the encoders for the angle
 	read_angle();
@@ -225,7 +228,7 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 		//Internal Option 3: Simple Spherical Response
 
         //Internal Option 4: Laryngoscope Lift
-        //if (m_ADS_data.ExternalComm.LaryngLiftSim)
+        //if (m_ADS_data.ExternalCommwow.LaryngLiftSim)
         //{
         //    sim_laryngoscopelift();
         //}
@@ -234,8 +237,18 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 		compensate_staticmu();
 		force_response();
 		compensate_gravity();
+
+        //Internal Option 5: Chirp
+        if (m_ADS_data.ExternalComm.ChirpSim)
+        {
+            elapsedTime = elapsedTime + samplingTime;
+            sim_chirp();
+        }
+
 		set_reference_torque();
 
+        m_ADS_data.MotorComm.out_torque = m_Outputs.Q1_targettorque;
+        m_ADS_data.MotorComm.out_vel = m_Inputs.Q1_velocity;
 		//set_dynamic_torque();
 
 	}
@@ -340,6 +353,14 @@ VOID CModule1::calibrate()
 	m_Controls.Q3_offset = 270 * pi / 180 + DEG3;	   //Wrist Actuator
 	m_Controls.Q4_offset = 0 * pi / 180 + DEG4;         //Side Actuator
     m_Controls.Q5_offset = 0 * pi / 180 + DEG5;         //Wrist 2nd DOF
+
+    /*
+    m_Controls.Q1_offset = -1.38072443 + DEG1;			//Main Left Actuator
+    m_Controls.Q2_offset = 1.967936 - DEG2;		   //Main Right Actuator
+    m_Controls.Q3_offset = 1.72213328 + DEG3;	   //Wrist Actuator
+    m_Controls.Q4_offset = 0 * pi / 180 + DEG4;         //Side Actuator
+    //m_Controls.Q5_offset = 0 * pi / 180 + DEG5;         //Wrist 2nd DOF
+    */
 
     phiOrig = 2.6;
     phiScale = 1.075;
@@ -613,9 +634,9 @@ VOID CModule1::simple_box_interior()
 //DATE: 7 / 28 / 2017, updated 5 / 8 / 2018 with MGK
 VOID CModule1::set_reference_torque()
 {
-	m_Outputs.Q1_targettorque =		(int)(-1 * t1 * (421875 / 6859) / .126495);
+	m_Outputs.Q1_targettorque =	(int)(-1 * t1 * (421875 / 6859) / .126495);
 	m_Outputs.Q2_targettorque =	(int)(-1 * t2 * (421875 / 6859) / .126495);
-	m_Outputs.Q3_targettorque =	(int)(-1 * t3 * (4554 / 130) / .126495);
+    m_Outputs.Q3_targettorque =	(int)(-1 * t3 * (4554 / 130) / .126495);
 	m_Outputs.Q4_targettorque =	-1*(int)(t4 * 50 / .0513942);
 }
 
@@ -783,4 +804,16 @@ VOID CModule1::sim_laryngoscopelift()
     m_ADS_data.MotorComm.FZ = (P0z - m_ADS_data.MotorComm.PZ)*kf;
 
     m_ADS_data.MotorComm.TY = sqrt_(m_ADS_data.MotorComm.FX*m_ADS_data.MotorComm.FX + m_ADS_data.MotorComm.FY*m_ADS_data.MotorComm.FY)*lev;
+}
+
+VOID CModule1::sim_chirp()
+{
+    //if (elapsedTime - prevTime > 1/frequency)
+    //{
+    //prevTime = elapsedTime;
+    t1 = t1 + amplitude*sin_(frequency*elapsedTime);
+    t2 = t2 + amplitude*sin_(frequency*elapsedTime);
+
+    //amplitude = -1 * amplitude;
+    //}
 }

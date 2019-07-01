@@ -53,6 +53,7 @@ typedef struct _Module1Outputs
 	SHORT Q2_targettorque;
 	SHORT Q3_targettorque;
 	SHORT Q4_targettorque;
+	ULONG TaskCycleTime;
 } Module1Outputs, *PModule1Outputs;
 
 #pragma pack(push,1)
@@ -68,6 +69,8 @@ typedef struct _Module1ADS_data
 		float FY;
 		float FZ;
 		float TY;
+		float out_torque;
+		float out_vel;
 	} MotorComm;
 	struct {
 		float EncoderValue;
@@ -75,7 +78,18 @@ typedef struct _Module1ADS_data
 	struct {
 		bool ZeroPos;
 		bool LaryngLiftSim;
+		bool ChirpSim;
 	} ExternalComm;
+	struct {
+		SHORT Q1_torque;
+		SHORT Q2_torque;
+		SHORT Q3_torque;
+		SHORT Q4_torque;
+		LONG Q1_vel;
+		LONG Q2_vel;
+		LONG Q3_vel;
+		LONG Q4_vel;
+	} MeasureComm;
 } Module1ADS_data, *PModule1ADS_data;
 #pragma pack(pop)
 

@@ -2378,7 +2378,7 @@ External Setpoint Generation:
 								<AreaNo AreaType="OutputSrc">1</AreaNo>
 								<Name>Outputs</Name>
 								<ContextId>1</ContextId>
-								<ByteSize>20</ByteSize>
+								<ByteSize>24</ByteSize>
 								<Symbol>
 									<Name>Value</Name>
 									<BitSize>32</BitSize>
@@ -2421,15 +2421,21 @@ External Setpoint Generation:
 									<BaseType GUID="{18071995-0000-0000-0000-000000000006}">INT</BaseType>
 									<BitOffs>144</BitOffs>
 								</Symbol>
+								<Symbol>
+									<Name>TaskCycleTime</Name>
+									<BitSize>32</BitSize>
+									<BaseType GUID="{18071995-0000-0000-0000-000000000008}">UDINT</BaseType>
+									<BitOffs>160</BitOffs>
+								</Symbol>
 							</DataArea>
 							<DataArea>
 								<AreaNo AreaType="Internal" CreateSymbols="true">2</AreaNo>
 								<Name>ADS_data</Name>
 								<ContextId>1</ContextId>
-								<ByteSize>42</ByteSize>
+								<ByteSize>75</ByteSize>
 								<Symbol>
 									<Name>MotorComm</Name>
-									<BitSize>288</BitSize>
+									<BitSize>352</BitSize>
 									<SubItem>
 										<Name>PX</Name>
 										<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
@@ -2484,6 +2490,18 @@ External Setpoint Generation:
 										<BitSize>32</BitSize>
 										<BitOffs>256</BitOffs>
 									</SubItem>
+									<SubItem>
+										<Name>out_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>288</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>out_vel</Name>
+										<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>320</BitOffs>
+									</SubItem>
 									<BitOffs>0</BitOffs>
 								</Symbol>
 								<Symbol>
@@ -2495,11 +2513,11 @@ External Setpoint Generation:
 										<BitSize>32</BitSize>
 										<BitOffs>0</BitOffs>
 									</SubItem>
-									<BitOffs>288</BitOffs>
+									<BitOffs>352</BitOffs>
 								</Symbol>
 								<Symbol>
 									<Name>ExternalComm</Name>
-									<BitSize>16</BitSize>
+									<BitSize>24</BitSize>
 									<SubItem>
 										<Name>ZeroPos</Name>
 										<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
@@ -2515,7 +2533,66 @@ External Setpoint Generation:
 											<EnumText>FALSE</EnumText>
 										</Default>
 									</SubItem>
-									<BitOffs>320</BitOffs>
+									<SubItem>
+										<Name>ChirpSim</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
+										<BitSize>8</BitSize>
+										<BitOffs>16</BitOffs>
+									</SubItem>
+									<BitOffs>384</BitOffs>
+								</Symbol>
+								<Symbol>
+									<Name>MeasureComm</Name>
+									<BitSize>192</BitSize>
+									<SubItem>
+										<Name>Q1_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000006}">INT</Type>
+										<BitSize>16</BitSize>
+										<BitOffs>0</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q2_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000006}">INT</Type>
+										<BitSize>16</BitSize>
+										<BitOffs>16</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q3_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000006}">INT</Type>
+										<BitSize>16</BitSize>
+										<BitOffs>32</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q4_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000006}">INT</Type>
+										<BitSize>16</BitSize>
+										<BitOffs>48</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q1_vel</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000009}">DINT</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>64</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q2_vel</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000009}">DINT</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>96</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q3_vel</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000009}">DINT</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>128</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q4_vel</Name>
+										<Type GUID="{18071995-0000-0000-0000-000000000009}">DINT</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>160</BitOffs>
+									</SubItem>
+									<BitOffs>408</BitOffs>
 								</Symbol>
 							</DataArea>
 							<DataArea>

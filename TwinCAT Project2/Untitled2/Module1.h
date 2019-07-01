@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Untitled2Interfaces.h"
+#include "TcRtInterfaces.h"
 #include "TcMath.h"
 #include <vector>
 
@@ -49,6 +50,7 @@ public:
 	void compensate_staticmu();
 	void zero_torque();
     void sim_laryngoscopelift();
+    void sim_chirp();
 
 	float offset1;
 	float DEG1;
@@ -140,6 +142,13 @@ public:
     float     P0y;
     float     P0z;
     float     kf;			//Force Spring Constant, 300 is upper
+
+    double samplingTime;
+    double elapsedTime = 0;
+    double prevTime = 0;
+    double frequency = 1;
+    double amplitude = 0;
+    int baseTorque = 0;
 
 	//Ryason end
 
