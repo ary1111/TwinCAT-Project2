@@ -215,6 +215,8 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 	update_position();
 	//update_jacobian();
 
+    update_measurement();
+
 	//Turn on the force feedback
 	//if (m_Controls.FORCE_ON)
     if(m_System.FORCE_ON)
@@ -247,8 +249,8 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 
 		set_reference_torque();
 
-        m_ADS_data.MotorComm.out_torque = m_Outputs.Q1_targettorque;
-        m_ADS_data.MotorComm.out_vel = m_Inputs.Q1_velocity;
+        //m_ADS_data.MotorComm.out_torque = m_Outputs.Q1_targettorque;
+        //m_ADS_data.MotorComm.out_vel = m_Inputs.Q1_velocity;
 		//set_dynamic_torque();
 
 	}
@@ -362,6 +364,7 @@ VOID CModule1::calibrate()
     //m_Controls.Q5_offset = 0 * pi / 180 + DEG5;         //Wrist 2nd DOF
     */
 
+    WRIST_SCALE = false;
     phiOrig = 2.6;
     phiScale = 1.075;
 
@@ -492,36 +495,27 @@ VOID CModule1::convert_angle()
 // Ryason:  Calculates the offset for the desired home position based on the current angle (0:2PI rad)
 VOID CModule1::update_position()
 {
-	//IDK if this is the phi used previously
-	//float phi = (m_Controls.Q4_realposition) * cos_(m_Controls.Q1_realposition + pi / 4)-pi/2;
-
-	// Original Position Derivation
-	//m_ADS_data.MotorComm.PX = L1*cos_(m_Controls.Q1_realposition)*cos_(phi) - L2*cos_(m_Controls.Q2_realposition);	//X, forward-back
-	//m_ADS_data.MotorComm.PY = -L1*sin_(phi);																														//Y, left-right
-	//m_ADS_data.MotorComm.PZ = L1*sin_(m_Controls.Q1_realposition)*cos_(phi) - L2*sin_(m_Controls.Q2_realposition);		//Z, up-down
-	//m_ADS_data.MotorComm.PHI = m_Controls.Q3_realposition;
-
 	phi	= -1*((m_Controls.Q4_realposition)* cos_(m_Controls.Q1_realposition + pi / 4)+pi/2);
 	qB	= m_Controls.Q3_realposition + asin_(L5*sin_(m_Controls.Q3_realposition) / L4);
 	qM = -1.047197551196598 + qB;
 	qQ = -1.047197551196598 + qM;
 
-    phiTemp = m_Controls.Q3_realposition - asin_(L5*sin_(2 * pi - m_Controls.Q3_realposition) / L4) - 0.8397;
-    phiDelta = phiTemp - phiOrig;
-
+    if (WRIST_SCALE) /*Used to give the wrist rotation a larger scale in the simulator, should be FALSE during characterization*/
+    {
+        phiTemp = m_Controls.Q3_realposition - asin_(L5*sin_(2 * pi - m_Controls.Q3_realposition) / L4) - 0.8397;
+        phiDelta = phiTemp - phiOrig;
+        m_ADS_data.MotorComm.PHI = phiTemp + phiScale*phiDelta;
+    }
+    else
+    {
+        m_ADS_data.MotorComm.PHI = m_Controls.Q3_realposition - asin_(L5*sin_(2 * pi - m_Controls.Q3_realposition) / L4) - 0.8397;
+    }
     //2nd Wrist DOF not implemented via MGK *****
-    //m_ADS_data.MotorComm.PHI = m_Controls.Q3_realposition - asin_(L5*sin_(2 * pi - m_Controls.Q3_realposition) / L4) - 0.8397;
-    m_ADS_data.MotorComm.PHI = phiTemp + phiScale*phiDelta;
     m_ADS_data.MotorComm.PSI = m_Controls.Q5_realposition;
-    m_ADS_data.MotorComm.PX = L1*sin_(m_Controls.Q1_realposition)*sin_(phi) - L2*cos_(m_Controls.Q2_realposition) + cos_(m_ADS_data.MotorComm.PHI)*LW*(cos_(m_ADS_data.MotorComm.PSI) - 1);		//X, forward-back
-    m_ADS_data.MotorComm.PY = -L1*cos_(m_Controls.Q1_realposition)*sin_(phi) - L2*sin_(m_Controls.Q2_realposition) + sin_(m_ADS_data.MotorComm.PHI)*LW*(cos_(m_ADS_data.MotorComm.PSI) - 1);		//Y, left-right
-    m_ADS_data.MotorComm.PZ = L1*cos_(phi) - sin_(m_ADS_data.MotorComm.PSI)*LW;
-
-    /*m_ADS_data.MotorComm.PX = L1*sin_(m_Controls.Q1_realposition)*sin_(phi) - L2*cos_(m_Controls.Q2_realposition);		//X, forward-back
-    m_ADS_data.MotorComm.PY = -L1*cos_(m_Controls.Q1_realposition)*sin_(phi) - L2*sin_(m_Controls.Q2_realposition);		//Y, left-right
-    m_ADS_data.MotorComm.PZ = L1*cos_(phi);
-    */
-    
+    m_ADS_data.MotorComm.PX = L1*sin_(m_Controls.Q1_realposition)*sin_(phi) - L2*cos_(m_Controls.Q2_realposition) + cos_(m_ADS_data.MotorComm.PHI)*LW*(cos_(m_ADS_data.MotorComm.PSI) - 1);		//X, Toward user - Away from user
+    m_ADS_data.MotorComm.PY = -L1*cos_(m_Controls.Q1_realposition)*sin_(phi) - L2*sin_(m_Controls.Q2_realposition) + sin_(m_ADS_data.MotorComm.PHI)*LW*(cos_(m_ADS_data.MotorComm.PSI) - 1);		//Y, Up-Down
+    m_ADS_data.MotorComm.PZ = L1*cos_(phi) - sin_(m_ADS_data.MotorComm.PSI)*LW;     //Z, Left-Right
+   
 }
 
 VOID CModule1::update_jacobian() //NOT UPDATED FOR MGK
@@ -685,9 +679,14 @@ VOID CModule1::compensate_gravity()
 {
 	//Temporary weighting coef. until proper mass properties obtained
     float w1 = 0.25; //.225
-    float w2 = 0;
+    float w2 = 0.1; //0
 	float w3 = 0.35;
 	float w4 = 0.50;
+
+    //float w1 = 1; //.225
+    //float w2 = 1;
+    //float w3 = 1;
+    //float w4 = 1;
 
 	t1 = t1 + g*((sin_(phi)*sin_(m_Controls.Q1_realposition) - m_Controls.Q4_realposition*cos_(phi)*cos_(m_Controls.Q1_realposition)*sin_(5 / 4 * pi + m_Controls.Q1_realposition))*(mG*L1 + mJ*Jcmz + mM*L1 + mP*L1 + mQ*L1 + mF*Fcmz + mF*Lcmz + mH*Hcmz + mI*L1)
 		+ cos_(m_Controls.Q1_realposition)*(mF*Fcmx + mF*Lcmx + mH*Hcmx + mI*Icmx)
@@ -816,4 +815,22 @@ VOID CModule1::sim_chirp()
 
     //amplitude = -1 * amplitude;
     //}
+}
+
+VOID CModule1::update_measurement()
+{
+    m_ADS_data.MotorComm.Q1_POS = m_Controls.Q1_realposition;
+    m_ADS_data.MotorComm.Q2_POS = m_Controls.Q2_realposition;
+    m_ADS_data.MotorComm.Q3_POS = m_Controls.Q3_realposition;
+    m_ADS_data.MotorComm.Q4_POS = m_Controls.Q4_realposition;
+
+    m_ADS_data.MotorComm.Q1_VEL = m_Controls.Q1_realvelocity;
+    m_ADS_data.MotorComm.Q2_VEL = m_Controls.Q2_realvelocity;
+    m_ADS_data.MotorComm.Q3_VEL = m_Controls.Q3_realvelocity;
+    m_ADS_data.MotorComm.Q4_VEL = m_Controls.Q4_realvelocity;
+
+    //m_ADS_data.MeasureComm.Q1_torque = m_Outputs.Q1_targettorque;
+    //m_ADS_data.MeasureComm.Q2_torque = m_Outputs.Q2_targettorque;
+    //m_ADS_data.MeasureComm.Q3_torque = m_Outputs.Q3_targettorque;
+    //m_ADS_data.MeasureComm.Q4_torque = m_Outputs.Q4_targettorque;
 }

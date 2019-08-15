@@ -71,6 +71,14 @@ typedef struct _Module1ADS_data
 		float TY;
 		float out_torque;
 		float out_vel;
+		float Q1_POS;
+		float Q2_POS;
+		float Q3_POS;
+		float Q4_POS;
+		float Q1_VEL;
+		float Q2_VEL;
+		float Q3_VEL;
+		float Q4_VEL;
 	} MotorComm;
 	struct {
 		float EncoderValue;
@@ -85,10 +93,14 @@ typedef struct _Module1ADS_data
 		SHORT Q2_torque;
 		SHORT Q3_torque;
 		SHORT Q4_torque;
-		LONG Q1_vel;
-		LONG Q2_vel;
-		LONG Q3_vel;
-		LONG Q4_vel;
+		float Q1_vel;
+		float Q2_vel;
+		float Q3_vel;
+		float Q4_vel;
+		float Q1_pos;
+		float Q2_pos;
+		float Q3_pos;
+		float Q4_pos;
 	} MeasureComm;
 } Module1ADS_data, *PModule1ADS_data;
 #pragma pack(pop)

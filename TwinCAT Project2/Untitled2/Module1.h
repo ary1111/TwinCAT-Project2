@@ -51,6 +51,7 @@ public:
 	void zero_torque();
     void sim_laryngoscopelift();
     void sim_chirp();
+    void update_measurement();
 
 	float offset1;
 	float DEG1;
@@ -66,6 +67,7 @@ public:
     float phiOrig;
     float phiDelta;
     float phiTemp;
+    bool WRIST_SCALE;
 
 	float J11;
 	float J12;
