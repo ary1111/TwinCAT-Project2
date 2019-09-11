@@ -7,6 +7,7 @@
 #pragma hdrstop
 
 #include "Module1.h"
+#include "Actuator.h"
 #include "TcTimeConversion.h"
 
 # define pi           3.14159265358979323846
@@ -350,19 +351,16 @@ VOID CModule1::read_angle()
 // Ryason:  Calculates the offset for the desired home position based on the current angle (0:360 deg)
 VOID CModule1::calibrate()
 {
+    Q1.SetParameters(421875 / 6859, 2.17, 0.0585);
+    Q2.SetParameters(421875 / 6859, 2.17, 0.0585);
+    Q3.SetParameters(4554 / 130, 2.17, 0.0585);
+    Q4.SetParameters(50,0.599,0.0858);
+
 	m_Controls.Q1_offset = 0 * pi / 180 + DEG1;			//Main Left Actuator
 	m_Controls.Q2_offset = 180*pi/180 - DEG2;		   //Main Right Actuator
 	m_Controls.Q3_offset = 270 * pi / 180 + DEG3;	   //Wrist Actuator
 	m_Controls.Q4_offset = 0 * pi / 180 + DEG4;         //Side Actuator
     m_Controls.Q5_offset = 0 * pi / 180 + DEG5;         //Wrist 2nd DOF
-
-    /*
-    m_Controls.Q1_offset = -1.38072443 + DEG1;			//Main Left Actuator
-    m_Controls.Q2_offset = 1.967936 - DEG2;		   //Main Right Actuator
-    m_Controls.Q3_offset = 1.72213328 + DEG3;	   //Wrist Actuator
-    m_Controls.Q4_offset = 0 * pi / 180 + DEG4;         //Side Actuator
-    //m_Controls.Q5_offset = 0 * pi / 180 + DEG5;         //Wrist 2nd DOF
-    */
 
     WRIST_SCALE = false;
     phiOrig = 2.6;
@@ -420,6 +418,10 @@ VOID CModule1::calibrate()
 	Qcmx = -.0152873;
 	Qcmy = .0027558;
 	Qcmz = .0185286;
+
+    w1[0] =1.7190;
+    w1[1] = 0.0102;
+    w1[2] = 1.4296;
 
     m_System.CALIBRATE = true;
 }
@@ -625,13 +627,12 @@ VOID CModule1::simple_box_interior()
 
 ///////////////////////////////////////////////////////////////////////////////
 // Ryason:  Sets a reference torque based on the static force feedback at the end effector
-//DATE: 7 / 28 / 2017, updated 5 / 8 / 2018 with MGK
 VOID CModule1::set_reference_torque()
 {
-	m_Outputs.Q1_targettorque =	(int)(-1 * t1 * (421875 / 6859) / .126495);
-	m_Outputs.Q2_targettorque =	(int)(-1 * t2 * (421875 / 6859) / .126495);
-    m_Outputs.Q3_targettorque =	(int)(-1 * t3 * (4554 / 130) / .126495);
-	m_Outputs.Q4_targettorque =	-1*(int)(t4 * 50 / .0513942);
+    m_Outputs.Q1_targettorque = -1 * Q1.ConvertInputTorque(t1);
+    m_Outputs.Q2_targettorque = -1 * Q2.ConvertInputTorque(t2);
+    m_Outputs.Q3_targettorque = -1 * Q3.ConvertInputTorque(t3);
+    m_Outputs.Q4_targettorque = -1 * Q4.ConvertInputTorque(t4);
 }
 
 VOID CModule1::set_dynamic_torque()
@@ -670,27 +671,25 @@ VOID CModule1::force_response()
 		- m_ADS_data.MotorComm.FZ*sin_(phi) 
 		- m_ADS_data.MotorComm.FY*cos_(phi)*cos_(m_Controls.Q1_realposition))) ;
 
-
 	//t3 = (int)(-TZ*(1 + L5*cos(m_Controls.Q3_realposition) / (L4*sqrt_(1 - L5 ^ 2 * sin(m_Controls.Q3_realposition) ^ 2 / L4 ^ 2))));
-    t3 = m_ADS_data.MotorComm.TY;
+    //t3 = m_ADS_data.MotorComm.TY;
 }
 
 VOID CModule1::compensate_gravity()
 {
 	//Temporary weighting coef. until proper mass properties obtained
-    float w1 = 0.25; //.225
+    //float w1 = 0.25; //.225
     float w2 = 0.1; //0
 	float w3 = 0.35;
 	float w4 = 0.50;
 
-    //float w1 = 1; //.225
-    //float w2 = 1;
-    //float w3 = 1;
-    //float w4 = 1;
-
-	t1 = t1 + g*((sin_(phi)*sin_(m_Controls.Q1_realposition) - m_Controls.Q4_realposition*cos_(phi)*cos_(m_Controls.Q1_realposition)*sin_(5 / 4 * pi + m_Controls.Q1_realposition))*(mG*L1 + mJ*Jcmz + mM*L1 + mP*L1 + mQ*L1 + mF*Fcmz + mF*Lcmz + mH*Hcmz + mI*L1)
-		+ cos_(m_Controls.Q1_realposition)*(mF*Fcmx + mF*Lcmx + mH*Hcmx + mI*Icmx)
-		+ mI*Icmy*sin_(m_Controls.Q1_realposition))*w1;
+    t1 = t1 + g*(w1[0]*sin_(phi)*sin_(m_Controls.Q1_realposition) - m_Controls.Q4_realposition*cos_(phi)*cos_(m_Controls.Q1_realposition)*sin_(5 / 4 * pi + m_Controls.Q1_realposition)
+        + w1[1] * cos_(m_Controls.Q1_realposition)
+        + w1[2] * sin_(m_Controls.Q1_realposition));
+	
+    //t1 = t1 + g*((sin_(phi)*sin_(m_Controls.Q1_realposition) - m_Controls.Q4_realposition*cos_(phi)*cos_(m_Controls.Q1_realposition)*sin_(5 / 4 * pi + m_Controls.Q1_realposition))*(mG*L1 + mJ*Jcmz + mM*L1 + mP*L1 + mQ*L1 + mF*Fcmz + mF*Lcmz + mH*Hcmz + mI*L1)
+	//	+ cos_(m_Controls.Q1_realposition)*(mF*Fcmx + mF*Lcmx + mH*Hcmx + mI*Icmx)
+	//	+ mI*Icmy*sin_(m_Controls.Q1_realposition))*w1;
 
 	t2 = t2 + g*(cos_(m_Controls.Q2_realposition)*(mC*Ccmx + mD*L3 + mF*L3 + mF*L3 + mM*L3 + mG*(Gcmx + L3) - mQ*L2)
 		+ mE*(Ecmx*cos_(m_Controls.Q2_realposition) - Ecmy*sin_(m_Controls.Q2_realposition)) + mP*(cos_(m_Controls.Q2_realposition)*(L3 + Pcmx) - Pcmy*sin_(m_Controls.Q2_realposition)))*w2;

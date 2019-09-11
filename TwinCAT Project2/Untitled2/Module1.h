@@ -5,6 +5,7 @@
 #include "Untitled2Interfaces.h"
 #include "TcRtInterfaces.h"
 #include "TcMath.h"
+#include "Actuator.h"
 #include <vector>
 
 class CModule1 
@@ -68,6 +69,11 @@ public:
     float phiDelta;
     float phiTemp;
     bool WRIST_SCALE;
+
+    Actuator Q1;
+    Actuator Q2;
+    Actuator Q3;
+    Actuator Q4;
 
 	float J11;
 	float J12;
@@ -138,6 +144,8 @@ public:
 	float    Qcmx;
 	float    Qcmy;
 	float    Qcmz;
+
+    float w1[3];
 
     //Testing Variables;
     float     P0x;
