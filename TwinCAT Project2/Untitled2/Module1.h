@@ -38,6 +38,7 @@ public:
 	//Ryason begin
 	void read_angle();
 	void update_position();
+    void update_velocity();
 	void update_jacobian();
 	void calibrate();
 	void convert_angle();
@@ -51,7 +52,7 @@ public:
 	void compensate_staticmu();
 	void zero_torque();
     void sim_laryngoscopelift();
-    void sim_chirp();
+    void sim_signal();
     void update_measurement();
 
 	float offset1;
@@ -145,7 +146,18 @@ public:
 	float    Qcmy;
 	float    Qcmz;
 
-    float w1[3];
+    float w1;
+    float w2;
+    float w3;
+    float w4;
+
+    float w[4];
+    float x[3];
+
+    float test_t1;
+    float test_t2;
+    float test_t3;
+    float test_t4;
 
     //Testing Variables;
     float     P0x;

@@ -2432,10 +2432,10 @@ External Setpoint Generation:
 								<AreaNo AreaType="Internal" CreateSymbols="true">2</AreaNo>
 								<Name>ADS_data</Name>
 								<ContextId>1</ContextId>
-								<ByteSize>123</ByteSize>
+								<ByteSize>139</ByteSize>
 								<Symbol>
 									<Name>MotorComm</Name>
-									<BitSize>608</BitSize>
+									<BitSize>736</BitSize>
 									<SubItem>
 										<Name>PX</Name>
 										<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
@@ -2550,6 +2550,30 @@ External Setpoint Generation:
 										<BitSize>32</BitSize>
 										<BitOffs>576</BitOffs>
 									</SubItem>
+									<SubItem>
+										<Name>Q1_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>608</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q2_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>640</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q3_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>672</BitOffs>
+									</SubItem>
+									<SubItem>
+										<Name>Q4_torque</Name>
+										<Type GUID="{18071995-0000-0000-0000-00000000000D}">REAL</Type>
+										<BitSize>32</BitSize>
+										<BitOffs>704</BitOffs>
+									</SubItem>
 									<BitOffs>0</BitOffs>
 								</Symbol>
 								<Symbol>
@@ -2561,7 +2585,7 @@ External Setpoint Generation:
 										<BitSize>32</BitSize>
 										<BitOffs>0</BitOffs>
 									</SubItem>
-									<BitOffs>608</BitOffs>
+									<BitOffs>736</BitOffs>
 								</Symbol>
 								<Symbol>
 									<Name>ExternalComm</Name>
@@ -2582,12 +2606,12 @@ External Setpoint Generation:
 										</Default>
 									</SubItem>
 									<SubItem>
-										<Name>ChirpSim</Name>
+										<Name>SignalSim</Name>
 										<Type GUID="{18071995-0000-0000-0000-000000000030}">BOOL</Type>
 										<BitSize>8</BitSize>
 										<BitOffs>16</BitOffs>
 									</SubItem>
-									<BitOffs>640</BitOffs>
+									<BitOffs>768</BitOffs>
 								</Symbol>
 								<Symbol>
 									<Name>MeasureComm</Name>
@@ -2664,7 +2688,7 @@ External Setpoint Generation:
 										<BitSize>32</BitSize>
 										<BitOffs>288</BitOffs>
 									</SubItem>
-									<BitOffs>664</BitOffs>
+									<BitOffs>792</BitOffs>
 								</Symbol>
 							</DataArea>
 							<DataArea>
@@ -2761,7 +2785,7 @@ External Setpoint Generation:
 								<AreaNo AreaType="Internal">4</AreaNo>
 								<Name>System</Name>
 								<ContextId>1</ContextId>
-								<ByteSize>2</ByteSize>
+								<ByteSize>6</ByteSize>
 								<Symbol>
 									<Name>CALIBRATE</Name>
 									<BitSize>8</BitSize>
@@ -2773,6 +2797,12 @@ External Setpoint Generation:
 									<BitSize>8</BitSize>
 									<BaseType GUID="{18071995-0000-0000-0000-000000000030}">BOOL</BaseType>
 									<BitOffs>8</BitOffs>
+								</Symbol>
+								<Symbol>
+									<Name>samplingTime</Name>
+									<BitSize>32</BitSize>
+									<BaseType GUID="{18071995-0000-0000-0000-00000000000D}">REAL</BaseType>
+									<BitOffs>16</BitOffs>
 								</Symbol>
 							</DataArea>
 						</DataAreas>

@@ -186,7 +186,7 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 
 	//Ryason begin
     hr = FAILED(hr) ? hr : ipTask->GetCycleTime(&m_Outputs.TaskCycleTime);
-    samplingTime = (double)m_Outputs.TaskCycleTime / 1000000000;
+    m_System.samplingTime = (double)m_Outputs.TaskCycleTime / 1000000000;
 
 	//Read the encoders for the angle
 	read_angle();
@@ -198,7 +198,6 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 	}
 
     //If ZERO variable is true, set the end effector position to P0
-
     if (!m_ADS_data.ExternalComm.ZeroPos)
     {
         P0x = m_ADS_data.MotorComm.PX;
@@ -207,19 +206,18 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 
         m_ADS_data.ExternalComm.ZeroPos = true;
     }
-
 	
 	//Calculates the real angular position and velocity
 	convert_angle();
 
 	//Calculates the real Cartesian position based on the real calibrated angles
 	update_position();
+    update_velocity();
 	//update_jacobian();
 
     update_measurement();
 
 	//Turn on the force feedback
-	//if (m_Controls.FORCE_ON)
     if(m_System.FORCE_ON)
 	{
 		//Internal Option 1: Simple Joint Response
@@ -240,18 +238,17 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 		compensate_staticmu();
 		force_response();
 		compensate_gravity();
+        
 
-        //Internal Option 5: Chirp
-        if (m_ADS_data.ExternalComm.ChirpSim)
+        //Internal Option 5: Signal Sim
+        if (m_ADS_data.ExternalComm.SignalSim)
         {
-            elapsedTime = elapsedTime + samplingTime;
-            sim_chirp();
+            elapsedTime = elapsedTime + m_System.samplingTime;
+            sim_signal();
         }
 
 		set_reference_torque();
 
-        //m_ADS_data.MotorComm.out_torque = m_Outputs.Q1_targettorque;
-        //m_ADS_data.MotorComm.out_vel = m_Inputs.Q1_velocity;
 		//set_dynamic_torque();
 
 	}
@@ -260,13 +257,6 @@ HRESULT CModule1::CycleUpdate(ITcTask* ipTask, ITcUnknown* ipCaller, ULONG_PTR c
 		//Set All torques = 0 //TURN ON BEFORE GOING SIM
 		zero_torque();
 	}
-	
-	//collision_response();
-	//m_Outputs.TargetTorque1 = 0;
-	//m_Outputs.RealPosition1 = (float)m_Inputs.ActualPosition1;
-
-	//External Reference Force
-	//Mechanism.SetReferenceForce(*ADS FORCE*);	
 
 	//Ryason end
 
@@ -419,9 +409,15 @@ VOID CModule1::calibrate()
 	Qcmy = .0027558;
 	Qcmz = .0185286;
 
-    w1[0] =1.7190;
-    w1[1] = 0.0102;
-    w1[2] = 1.4296;
+    //Temporary weighting coef. until proper mass properties obtained
+    w1 = 0.85;
+    w2 = 0.75;// 0.1; //0
+    w3 = 0.1;// 0.35;
+    w4 = 1.0;// 0.50;
+
+    w[0] = 1.222;
+    w[1] = 0.0042;
+    w[2] = 0.9406;
 
     m_System.CALIBRATE = true;
 }
@@ -518,6 +514,16 @@ VOID CModule1::update_position()
     m_ADS_data.MotorComm.PY = -L1*cos_(m_Controls.Q1_realposition)*sin_(phi) - L2*sin_(m_Controls.Q2_realposition) + sin_(m_ADS_data.MotorComm.PHI)*LW*(cos_(m_ADS_data.MotorComm.PSI) - 1);		//Y, Up-Down
     m_ADS_data.MotorComm.PZ = L1*cos_(phi) - sin_(m_ADS_data.MotorComm.PSI)*LW;     //Z, Left-Right
    
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Ryason:  Filters the angular velocity of the actuators
+VOID CModule1::update_velocity()
+{
+    Q1.FilterVelocity(m_Controls.Q1_realvelocity);
+    Q2.FilterVelocity(m_Controls.Q2_realvelocity);
+    Q3.FilterVelocity(m_Controls.Q3_realvelocity);
+    Q4.FilterVelocity(m_Controls.Q4_realvelocity);
 }
 
 VOID CModule1::update_jacobian() //NOT UPDATED FOR MGK
@@ -677,19 +683,11 @@ VOID CModule1::force_response()
 
 VOID CModule1::compensate_gravity()
 {
-	//Temporary weighting coef. until proper mass properties obtained
-    //float w1 = 0.25; //.225
-    float w2 = 0.1; //0
-	float w3 = 0.35;
-	float w4 = 0.50;
+    x[0] = sin_(phi)*sin_(m_Controls.Q1_realposition) - m_Controls.Q4_realposition*cos_(phi)*cos_(m_Controls.Q1_realposition)*sin_(5 / 4 * pi + m_Controls.Q1_realposition);
+    x[1] = cos_(m_Controls.Q1_realposition);
+    x[2] = sin_(m_Controls.Q1_realposition);
 
-    t1 = t1 + g*(w1[0]*sin_(phi)*sin_(m_Controls.Q1_realposition) - m_Controls.Q4_realposition*cos_(phi)*cos_(m_Controls.Q1_realposition)*sin_(5 / 4 * pi + m_Controls.Q1_realposition)
-        + w1[1] * cos_(m_Controls.Q1_realposition)
-        + w1[2] * sin_(m_Controls.Q1_realposition));
-	
-    //t1 = t1 + g*((sin_(phi)*sin_(m_Controls.Q1_realposition) - m_Controls.Q4_realposition*cos_(phi)*cos_(m_Controls.Q1_realposition)*sin_(5 / 4 * pi + m_Controls.Q1_realposition))*(mG*L1 + mJ*Jcmz + mM*L1 + mP*L1 + mQ*L1 + mF*Fcmz + mF*Lcmz + mH*Hcmz + mI*L1)
-	//	+ cos_(m_Controls.Q1_realposition)*(mF*Fcmx + mF*Lcmx + mH*Hcmx + mI*Icmx)
-	//	+ mI*Icmy*sin_(m_Controls.Q1_realposition))*w1;
+    t1 = t1 + g*w1*(w[0] * x[0] + w[1] * x[1] + w[2] * x[2]);
 
 	t2 = t2 + g*(cos_(m_Controls.Q2_realposition)*(mC*Ccmx + mD*L3 + mF*L3 + mF*L3 + mM*L3 + mG*(Gcmx + L3) - mQ*L2)
 		+ mE*(Ecmx*cos_(m_Controls.Q2_realposition) - Ecmy*sin_(m_Controls.Q2_realposition)) + mP*(cos_(m_Controls.Q2_realposition)*(L3 + Pcmx) - Pcmy*sin_(m_Controls.Q2_realposition)))*w2;
@@ -804,16 +802,20 @@ VOID CModule1::sim_laryngoscopelift()
     m_ADS_data.MotorComm.TY = sqrt_(m_ADS_data.MotorComm.FX*m_ADS_data.MotorComm.FX + m_ADS_data.MotorComm.FY*m_ADS_data.MotorComm.FY)*lev;
 }
 
-VOID CModule1::sim_chirp()
+VOID CModule1::sim_signal()
 {
-    //if (elapsedTime - prevTime > 1/frequency)
-    //{
-    //prevTime = elapsedTime;
-    t1 = t1 + amplitude*sin_(frequency*elapsedTime);
-    t2 = t2 + amplitude*sin_(frequency*elapsedTime);
+    //Functions for torque vs. velocity
+    //t1 = t1 + amplitude*sin_(frequency*elapsedTime); //amplitude = 0.16, freq = 0.6
+    //t2 = t2 + amplitude*sin_(frequency*elapsedTime); //amplitude = 0.16, freq = 0.6
+    //t3 = t3 + amplitude*sin_(frequency*elapsedTime); //amplitude = 0.1, freq = 0.75
+    //t4 = t4 + amplitude*sin_(frequency*elapsedTime); //amplitude = 0.5, freq = 0.5
 
-    //amplitude = -1 * amplitude;
-    //}
+    //Functions for breakaway force
+    //t1 = t1 + elapsedTime/100;
+    //t2 = t2 - elapsedTime / 100;
+    //t3 = t3 + elapsedTime / 100;
+    //t4 = t4 - elapsedTime/10;
+
 }
 
 VOID CModule1::update_measurement()
@@ -823,13 +825,13 @@ VOID CModule1::update_measurement()
     m_ADS_data.MotorComm.Q3_POS = m_Controls.Q3_realposition;
     m_ADS_data.MotorComm.Q4_POS = m_Controls.Q4_realposition;
 
-    m_ADS_data.MotorComm.Q1_VEL = m_Controls.Q1_realvelocity;
-    m_ADS_data.MotorComm.Q2_VEL = m_Controls.Q2_realvelocity;
-    m_ADS_data.MotorComm.Q3_VEL = m_Controls.Q3_realvelocity;
-    m_ADS_data.MotorComm.Q4_VEL = m_Controls.Q4_realvelocity;
+    m_ADS_data.MotorComm.Q1_VEL = Q1.GetVelocity();
+    m_ADS_data.MotorComm.Q2_VEL = Q2.GetVelocity();
+    m_ADS_data.MotorComm.Q3_VEL = Q3.GetVelocity();
+    m_ADS_data.MotorComm.Q4_VEL = Q4.GetVelocity();
 
-    //m_ADS_data.MeasureComm.Q1_torque = m_Outputs.Q1_targettorque;
-    //m_ADS_data.MeasureComm.Q2_torque = m_Outputs.Q2_targettorque;
-    //m_ADS_data.MeasureComm.Q3_torque = m_Outputs.Q3_targettorque;
-    //m_ADS_data.MeasureComm.Q4_torque = m_Outputs.Q4_targettorque;
+    m_ADS_data.MotorComm.Q1_torque = m_Outputs.Q1_targettorque;
+    m_ADS_data.MotorComm.Q2_torque = m_Outputs.Q2_targettorque;
+    m_ADS_data.MotorComm.Q3_torque = m_Outputs.Q3_targettorque;
+    m_ADS_data.MotorComm.Q4_torque = m_Outputs.Q4_targettorque;
 }
